@@ -1,15 +1,16 @@
 import pygame as pg
 import random
 import time as Time
-from datetime import datetime
-import sqlite3
+
+# from datetime import datetime
+# import sqlite3
 
 db_name = "data/DB/mario.db"
 level_num = 1
 tile_size = 50
 FPS = 30  # frames per second
 time_per_level = 150  # время, отведенное на прохождение уровня
-saved_to_db = False  # флаг для однократного сохранения
+# saved_to_db = False  # флаг для однократного сохранения
 user_text = ''
 blink_counter = 6  # счетчик "миганий" сообщения о событии (т.ч. срабатывания события BLINK_EVENT)
 text_to_blink = ""  # тест сообщения о событии в игре
@@ -79,10 +80,10 @@ def start_screen(w, h, scrn, msc, clk):
         scrn.blit(text_start, (100, 3 * h / 4 - 155))
         scrn.blit(text_quit, (120, 3 * h / 4 - 75))
 
-        # для поля ввода имени
+        # для поля ввода уровня
         color_active = pg.Color(190, 255, 190)
         color_passive = pg.Color(0, 177, 32)
-        enter_name = btn_font.render('Your name:', True, color_user_label)
+        enter_name = btn_font.render('Num of level:', True, color_user_label)
         scrn.blit(enter_name, (30, 3 * h / 4 - 225))
         if active:
             color = color_active
@@ -539,34 +540,31 @@ class Enemy(Entity):
         return 'enemy', (self.rect.x, self.rect.y)
 
 
-# сохранение результатов и получение top-5 лучших игроков
-def SaveResult(scrn):
-    global save_to_db
-    res = []
-    res.append(['N', 'Имя игрока', 'Результат'])
-    con = sqlite3.connect(db_name)
-    cur = con.cursor()
-    query = '''
-                        insert into players (NAME, PLAY_TIME, GAME_RESULT) 
-                        values (?,?,?)    
-                         '''
-    cur.execute(query, (Player.name, datetime.now(), Player.all_score))
-    con.commit()
-    cur.close()
-    cur = con.cursor()
-    query = '''
-                SELECT NAME, GAME_RESULT FROM players order by  game_result desc limit 5
-            '''
-    tmp = cur.execute(query).fetchall()
-    for i, row in enumerate(tmp):
-        res.append([i + 1] + list(row))
-    cur.close()
-    save_to_db = False
-    return res
+# # сохранение результатов и получение top-5 лучших игроков
+# def SaveResult(scrn):
+#     global save_to_db
+#     res = []
+#     res.append(['N', 'Имя игрока', 'Результат'])
+#     con = sqlite3.connect(db_name)
+#     cur = con.cursor()
+#     query = '''
+#                         insert into players (NAME, PLAY_TIME, GAME_RESULT)
+#                         values (?,?,?)
+#                          '''
+#     cur.execute(query, (Player.name, datetime.now(), Player.all_score))
+#     con.commit()
+#     cur.close()
+#     cur = con.cursor()
+#     query = '''
+#                 SELECT NAME, GAME_RESULT FROM players order by  game_result desc limit 5
+#             '''
+#     tmp = cur.execute(query).fetchall()
+#     for i, row in enumerate(tmp):
+#         res.append([i + 1] + list(row))
+#     cur.close()
+#     save_to_db = False
+#     return res
 
-
-level_path = f'data/levels/{level_num}_lvl.txt'
-level = Level(level_path)
 top5 = []
 BLINK_EVENT = pg.USEREVENT + 0
 empty = (255, 255, 255, 0)
@@ -580,8 +578,12 @@ music = pg.mixer.music
 size = width, height = 1000, 700
 screen = pg.display.set_mode(size)
 start_screen(width, height, screen, music, clock)
-Player.name = user_text
 ftime = pg.time.get_ticks()
+
+level_num = user_text
+
+level_path = f'data/levels/{level_num}_lvl.txt'
+level = Level(level_path)
 
 music.load("data/sounds/main_track.mp3")
 music.play(-1)
@@ -614,9 +616,9 @@ while running:
                                     False, (255, 255, 255),
                                     (0, 0, 0))
         # сохраняю в БД имя игрока, дату игры и результат
-        if not saved_to_db:
-            top5 = SaveResult(screen)
-            saved_to_db = True
+        # if not saved_to_db:
+        # top5 = SaveResult(screen)
+        # saved_to_db = True
 
         screen.blit(congrat_label, (422, 80))
         screen.blit(score_label, (415, 130))
@@ -650,12 +652,6 @@ while running:
                 music.load("data/sounds/hurry_track.mp3")
                 music.play(-1)
                 is_other_music = True
-
-            elif timer <= 0:
-                Player.is_died = True
-                music.load("data/sounds/death_sound.mp3")
-                music.play(1)
-                tooMuch_time = True
 
         if not Player.is_died:
             for event in pg.event.get():
@@ -706,9 +702,9 @@ while running:
                 screen.blit(blink_surface, blink_rect)
         else:
             # сохраняю в БД имя игрока, дату игры и результат
-            if not saved_to_db:
-                top5 = SaveResult(screen)
-                saved_to_db = True  # подняли флаг, чтобы избежать повторного сохранения
+            # if not saved_to_db:
+            # top5 = SaveResult(screen)
+            # saved_to_db = True  # подняли флаг, чтобы избежать повторного сохранения
 
             game_over = font.render(f"Game over!", False, (255, 255, 255), (0, 0, 0))
             final_score = font.render(f"Your score: {Player.all_score}", True, (255, 255, 255), (0, 0, 0))
